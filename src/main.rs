@@ -1,4 +1,3 @@
-use std::fs;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
@@ -33,58 +32,52 @@ fn line_num2(line: &str)->u32{
     let mut digit1 = 0;
     let mut digit2 = 0;
 
-    let mut idx1=10000;
-    let mut idx2=0;
+    let mut idx1 = 10000;
+    let mut idx2 = 0;
 
-    if numbers.len() > 0{
-        let mut idx1=numbers_idx[0];
-        let mut idx2=numbers_idx[numbers_idx.len()-1];
-
+    if numbers.len() == 1{
+        idx1 = numbers_idx[0];
+        digit1 = numbers[0];
+        idx2 = numbers_idx[0];
+        digit2 = numbers[0];
+    }
+    if numbers.len() > 1{
+        idx1 = numbers_idx[0];
+        idx2 = numbers_idx[numbers_idx.len()-1];
+        digit1 = numbers[0];
+        digit2 = numbers[numbers_idx.len()-1];
+    }
     let number_strings = vec!["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
         for (pos, number_str) in number_strings.iter().enumerate(){
-            let idx = line.find(number_str);
-            match idx{
-                Some(idx) => {
-                    if idx <= idx1{
-                        digit1 = pos as u32;
-                        idx1 = idx;
-                    }
-                    if idx >= idx2{
-                        numbers_idx.push(pos);
-                        digit2 = pos as u32;
-                        idx2 = idx;
-                    }
-                },
-                None => (),
-            }
-        }
-        if digit1 == 0{ digit1 = numbers[0]; }
-        if digit2 == 0{ digit2 = numbers[numbers.len()-1]; }
-    }
-        else{
-            let number_strings = vec!["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
-            for (pos, number_str) in number_strings.iter().enumerate(){
-                let idx = line.find(number_str);
-                match idx{
-                    Some(idx) => {
-                        if idx <= idx1{
-                            digit1 = pos as u32;
-                            idx1 = idx;
-                        }
-                        if idx >= idx2{
-                            digit2 = pos as u32;
-                            idx2 = idx;
-                        }
-                    },
-                    None => (),
+            let v: Vec<_> = line.match_indices(number_str).collect();
+            if v.len() > 0 {
+                let idx_low = v[0].0;
+                let idx_high = v[v.len()-1].0;
+                if idx_low < idx1{
+                    digit1 = pos as u32;
+                    idx1 = idx_low;
                 }
-
+                if idx_high > idx2{
+                    digit2 = pos as u32;
+                    idx2 = idx_high;
+                }
             }
         }
-    assert_ne!(idx1, idx2);
-        let ret = 10* digit1 + digit2;
-        println!("{}", ret);
-        ret
+
+    // println!("{} {}", idx1, idx2);
+    // assert_ne!(idx1, idx2);
+    // assert!(idx2>idx1);
+    //
+    let ret;
+    // if idx1 == idx2{
+    //     ret = digit1;
+    // } else if digit2==0{
+    //     ret = digit1;
+    // } else{
+        ret = 10* digit1 + digit2;
+    // }
+    println!("{}", ret);
+    ret
 
 }
 
@@ -122,6 +115,39 @@ mod tests {
     #[test]
     fn test_example_part2() {
         assert_eq!(part2("Inputs/Day1/example2"), 281);
+    }
+
+    #[test]
+    fn test_line1() {
+        assert_eq!(line_num2("twogpfttmhp8two13"), 23);
+    }
+    #[test]
+    fn test_line2() {
+        assert_eq!(line_num2("b8"), 88);
+    }
+    #[test]
+    fn test_line3() {
+        assert_eq!(line_num2("634jgvbvr"), 64);
+    }
+    #[test]
+    fn test_line4() {
+        assert_eq!(line_num2("ninesixmxvdcqgxcmskl115lskkp"), 95);
+    }
+    #[test]
+    fn test_line5() {
+        assert_eq!(line_num2("eighteigheightteight"), 88);
+    }
+    #[test]
+    fn test_line6() {
+        assert_eq!(line_num2("8888882137888888888"), 88);
+    }
+    #[test]
+    fn test_line7() {
+        assert_eq!(line_num2("7one6874"), 74);
+    }
+    #[test]
+    fn test_line8() {
+        assert_eq!(line_num2("eighjpiigmdt1"), 11);
     }
 
 }
