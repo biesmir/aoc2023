@@ -425,16 +425,14 @@ fn day4_part2(input_file: &str) -> u32 {
     if let Ok(lines) = read_lines(input_file) {
         let mut card_count: Vec<u32> = vec![1; 1000];
         for (i, line) in lines.enumerate() {
-            println!("{}", card_count[i]);
-
-            for j in i+1..i + scratch_line_result_count(&line.unwrap()) + 1 {
+            // println!("{}", card_count[i]);
+            limit = i;
+            for j in i + 1..i + scratch_line_result_count(&line.unwrap()) + 1 {
                 card_count[j] += card_count[i];
-
-                limit = i;
             }
         }
 
-        return card_count[..208].into_iter().sum();
+        return card_count[..limit+1].into_iter().sum();
     }
     panic!("file not found");
 }
