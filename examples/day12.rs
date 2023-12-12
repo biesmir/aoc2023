@@ -21,9 +21,15 @@ fn check_permutation(
     if so_far == *groups {
         return PermutationCorrectness::Correct;
     }
+
     for (idx, count) in so_far.iter().enumerate() {
         if idx >= groups.len() {
             return PermutationCorrectness::Incorrect;
+        }
+        if idx < so_far.len()-1 {
+            if count < &groups[idx] {
+                return PermutationCorrectness::Incorrect;
+            }
         }
         if count > &groups[idx] {
             return PermutationCorrectness::Incorrect;
@@ -50,7 +56,6 @@ fn check_permutation(
         // println!("{} + {} + {} > {}", count_so_far, qmarks_left, leftover, goal_count);
         return PermutationCorrectness::Incorrect;
     }
-
 
     return PermutationCorrectness::Possible;
 }
@@ -80,11 +85,11 @@ fn get_broken_springs_so_far(springs: &Vec<char>) -> (Vec<u64>, usize) {
             }
             _ => {
                 let mut leftover = 0;
-                    if on_series {
-                        nums.push(current_series);
-                    }
+                if on_series {
+                    nums.push(current_series);
+                }
 
-                for k in j+1..springs.len() {
+                for k in j + 1..springs.len() {
                     if springs[k] == '#' {
                         leftover += 1;
                     }
