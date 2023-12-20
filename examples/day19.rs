@@ -193,10 +193,10 @@ mod tests {
     fn test_part1_example1() {
         assert_eq!(part1("Inputs/Day19/example"), 19114);
     }
-    // #[test]
-    // fn test_part2_example1() {
-    //     assert_eq!(part2("Inputs/Day19/example"), 952408144115);
-    // }
+    #[test]
+    fn test_part2_example1() {
+        assert_eq!(part2("Inputs/Day19/example"), 167409079868000);
+    }
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
