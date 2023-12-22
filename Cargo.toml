@@ -9,6 +9,7 @@ edition = "2021"
 atoi = "2.0.0"
 strum = "0.17.1"
 strum_macros = "0.17.1"
+debug_print = "1.0.0"
 
 [profile.release]
 opt-level = 3
