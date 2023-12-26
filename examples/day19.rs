@@ -1,5 +1,6 @@
 use debug_print::debug_print;
 use debug_print::debug_println;
+use std::cmp::max;
 use std::cmp::min;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
@@ -161,7 +162,175 @@ fn part1(filename: &str) -> usize {
     panic!()
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Ranges {
+    x_min: usize,
+    x_max: usize,
+    m_min: usize,
+    m_max: usize,
+    a_min: usize,
+    a_max: usize,
+    s_min: usize,
+    s_max: usize,
+}
+
 fn part2(filename: &str) -> usize {
+    let mut workflows: HashMap<String, Workflow> = HashMap::new();
+    if let Ok(mut lines) = read_lines(filename) {
+        loop {
+            let line = lines.next().unwrap().unwrap();
+            if line.len() < 2 {
+                break;
+            }
+            let (prefix, sufix) = line.split_once('{').unwrap();
+
+            let mut workflow = Workflow { nodes: Vec::new() };
+
+            let mut sufix = sufix.to_string();
+            sufix.pop();
+
+            let mut nodes: Vec<&str> = sufix.split(',').collect();
+            let terminator = WorkflowNode::Terminator(nodes.pop().unwrap().to_string());
+
+            for node in nodes {
+                if let Some((property, value_next)) = node.split_once('>') {
+                    let (value, next) = value_next.split_once(':').unwrap();
+                    workflow.nodes.push(WorkflowNode::Ordinary(Node {
+                        param_checked: property.chars().nth(0).unwrap(),
+                        gt: true,
+                        val: value.parse::<usize>().unwrap(),
+                        next: next.to_string(),
+                    }));
+                } else {
+                    let (property, value_next) = node.split_once('<').unwrap();
+                    let (value, next) = value_next.split_once(':').unwrap();
+                    workflow.nodes.push(WorkflowNode::Ordinary(Node {
+                        param_checked: property.chars().nth(0).unwrap(),
+                        gt: false,
+                        val: value.parse::<usize>().unwrap(),
+                        next: next.to_string(),
+                    }));
+                }
+            }
+
+            workflow.nodes.push(terminator);
+
+            workflows.insert(prefix.to_string(), workflow);
+        }
+
+        let mut to_check: Vec<(Ranges, &str)> = Vec::new();
+        let mut solution = 0;
+        let r_start = Ranges {
+            x_min: 1,
+            x_max: 4000,
+            m_min: 1,
+            m_max: 4000,
+            a_min: 1,
+            a_max: 4000,
+            s_min: 1,
+            s_max: 4000,
+        };
+
+        to_check.push((r_start, "in"));
+
+        'outer: loop {
+            if let Some(mut node) = to_check.pop() {
+                debug_println!("node {}", node.1);
+                let workflow = workflows.get(node.1).unwrap();
+                for op in &workflow.nodes {
+                    match op {
+                        WorkflowNode::Terminator(term) => match term.as_str() {
+                            "A" => {
+                                if node.0.x_min < node.0.x_max
+                                    && node.0.m_min < node.0.m_max
+                                    && node.0.a_min < node.0.a_max
+                                    && node.0.s_min < node.0.s_max
+                                {
+                                    solution += (node.0.x_max - node.0.x_min + 1)
+                                        * (node.0.m_max - node.0.m_min + 1)
+                                        * (node.0.a_max - node.0.a_min + 1)
+                                        * (node.0.s_max - node.0.s_min + 1);
+                                }
+                                continue 'outer;
+                            }
+                            "R" => continue 'outer,
+                            _ => {
+                                to_check.push((node.0, term));
+                                break;
+                            }
+                        },
+                        WorkflowNode::Ordinary(ord) => {
+                            let mut split_node = node.clone();
+                            match ord.param_checked {
+                                'x' => {
+                                    if ord.gt {
+                                        split_node.0.x_min = max(ord.val + 1, split_node.0.x_min);
+                                        node.0.x_max = max(ord.val, node.0.x_min);
+                                    } else {
+                                        split_node.0.x_max = min(ord.val - 1, split_node.0.x_max);
+                                        node.0.x_min = min(ord.val, node.0.x_max);
+                                    }
+                                }
+                                'm' => {
+                                    if ord.gt {
+                                        split_node.0.m_min = max(ord.val + 1, split_node.0.m_min);
+                                        node.0.m_max = max(ord.val, node.0.m_min);
+                                    } else {
+                                        split_node.0.m_max = min(ord.val - 1, split_node.0.m_max);
+                                        node.0.m_min = min(ord.val, node.0.m_max);
+                                    }
+                                }
+                                'a' => {
+                                    if ord.gt {
+                                        split_node.0.a_min = max(ord.val + 1, split_node.0.a_min);
+                                        node.0.a_max = max(ord.val, node.0.a_min);
+                                    } else {
+                                        split_node.0.a_max = min(ord.val - 1, split_node.0.a_max);
+                                        node.0.a_min = min(ord.val, node.0.a_max);
+                                    }
+                                }
+                                's' => {
+                                    if ord.gt {
+                                        split_node.0.s_min = max(ord.val + 1, split_node.0.s_min);
+                                        node.0.s_max = max(ord.val, node.0.s_min);
+                                    } else {
+                                        split_node.0.s_max = min(ord.val - 1, split_node.0.s_max);
+                                        node.0.s_min = min(ord.val, node.0.s_max);
+                                    }
+                                }
+                                _ => panic!(),
+                            }
+                            split_node.1 = &ord.next;
+                            match split_node.1 {
+                                "A" => {
+                                    if split_node.0.x_min < split_node.0.x_max
+                                        && split_node.0.m_min < split_node.0.m_max
+                                        && split_node.0.a_min < split_node.0.a_max
+                                        && split_node.0.s_min < split_node.0.s_max
+                                    {
+                                        solution += (split_node.0.x_max - split_node.0.x_min + 1)
+                                            * (split_node.0.m_max - split_node.0.m_min + 1)
+                                            * (split_node.0.a_max - split_node.0.a_min + 1)
+                                            * (split_node.0.s_max - split_node.0.s_min + 1);
+                                    }
+                                    debug_println!("{} >= x >= {}  ", split_node.0.x_max, split_node.0.x_min);
+                                    debug_println!("{} >= m >= {}  ", split_node.0.m_max, split_node.0.m_min);
+                                    debug_println!("{} >= a >= {}  ", split_node.0.a_max, split_node.0.a_min);
+                                    debug_println!("{} >= s >= {}  ", split_node.0.s_max, split_node.0.s_min);
+                                }
+                                "R" => (),
+                                _ => {
+                                    to_check.push(split_node);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                return solution;
+            }
+        }
+    }
     todo!()
 }
 
